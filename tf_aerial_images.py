@@ -17,10 +17,9 @@ from PIL import Image
 
 import code
 
-import tensorflow.python.platform
-
 import numpy
 import tensorflow as tf
+# import tensorflow.compat.v1 as tf
 
 NUM_CHANNELS = 3  # RGB images
 PIXEL_DEPTH = 255
@@ -198,7 +197,7 @@ def make_img_overlay(img, predicted_img):
 
 def main(argv=None):  # pylint: disable=unused-argument
 
-    data_dir = 'training/'
+    data_dir = 'data/training/'
     train_data_filename = data_dir + 'images/'
     train_labels_filename = data_dir + 'groundtruth/' 
 
@@ -505,7 +504,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
                         sys.stdout.flush()
                     else:
-                        # Run the graph and fetch some of the nodes.
+                        # Run the graph and fetch some nodes.
                         _, l, lr, predictions = s.run(
                             [optimizer, loss, learning_rate, train_prediction],
                             feed_dict=feed_dict)
