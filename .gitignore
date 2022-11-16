@@ -1,6 +1,9 @@
 # data
 data
 
+# model files
+*.pth
+
 # IDE config files
 .idea
 .vscode
