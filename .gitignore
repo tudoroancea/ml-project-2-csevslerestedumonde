@@ -1,5 +1,6 @@
 # data
 data
+data.zip
 
 # model files
 *.pth
@@ -7,6 +8,7 @@ data
 # IDE config files
 .idea
 .vscode
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
