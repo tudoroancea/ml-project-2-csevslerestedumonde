@@ -59,43 +59,46 @@ def check() -> bool:
 class RoadsDataset(tdata.Dataset):
     root: str
     num_images: int
-    images: list
-    gt_images: list
-    gt_images_one_hot: list
+    images: torch.Tensor
+    gt_images: torch.Tensor
+    gt_images_one_hot: torch.Tensor
 
     def __init__(
         self,
         root: str,
         num_images=20,
-        transform=None,
-        target_transform=None,
         device="cuda",
     ):
         self.root = root
-        self.transform = transform
-        self.target_transform = target_transform
         self.num_images = num_images
         assert 10 <= num_images <= 800
         self.images = []
         self.gt_images = []
         self.gt_images_one_hot = []
-        read_image = torchvision.transforms.ToTensor()
+        image_to_tensor = torchvision.transforms.ToTensor()
         for i in range(num_images):
             image_path = os.path.join(
                 self.root, "images/satImage_" + str(i + 1).zfill(4) + ".png"
             )
-            img = read_image(Image.open(image_path)).type(torch.float32).to(device)
+            img = image_to_tensor(Image.open(image_path)).type(torch.float32).to(device)
             img /= 255.0
+            img = torch.unsqueeze(img, 0)
             self.images.append(img)
 
             gt_image_path = os.path.join(
                 self.root, "groundtruth/satImage_" + str(i + 1).zfill(4) + ".png"
             )
-            gt_image = read_image(Image.open(gt_image_path))
+            gt_image = image_to_tensor(Image.open(gt_image_path)).to(device)
+            gt_image = torch.unsqueeze(gt_image, 0)
             self.gt_images.append(gt_image)
 
             gt_image_one_hot = torch.cat((gt_image / 255, 1 - gt_image / 255))
+            gt_image_one_hot = torch.unsqueeze(gt_image_one_hot, 0)
             self.gt_images_one_hot.append(gt_image_one_hot)
+
+        self.images = torch.cat(self.images, 0)
+        self.gt_images = torch.cat(self.gt_images, 0)
+        self.gt_images_one_hot = torch.cat(self.gt_images_one_hot, 0)
 
         print("Loaded {} images from {}".format(num_images, root))
 
@@ -103,17 +106,7 @@ class RoadsDataset(tdata.Dataset):
         return self.num_images
 
     def __getitem__(self, item: int) -> tuple:
-        if self.transform:
-            image = self.transform(self.images[item])
-        else:
-            image = self.images[item]
-
-        if self.target_transform:
-            gt_image_one_hot = self.target_transform(self.gt_images_one_hot[item])
-        else:
-            gt_image_one_hot = self.gt_images_one_hot[item]
-
-        return image, gt_image_one_hot
+        return self.images[item, :, :, :], self.gt_images_one_hot[item, :, :, :]
 
 
 if __name__ == "__main__":
