@@ -1,8 +1,9 @@
-# data
 data
+data_augmented
 data.zip
-
-# model files
+slurm*.out
+venv*
+*.png
 *.pth
 
 # IDE config files
