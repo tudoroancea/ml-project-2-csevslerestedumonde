@@ -1,6 +1,7 @@
 import torch
 from mask_to_submission import masks_to_submission
 from torchvision.utils import save_image
+import matplotlib.pyplot as plt
 # torchvision.utils.save_image(gt_image, "2.png")
 
 
@@ -22,7 +23,8 @@ def save_images(images: list, path: str):
         path (str): A path to save the images to.
     """
     for i, image in enumerate(images):
-        save_image(image, path + "image_" + str(i + 1).zfill(3) + ".png")
+        # plt.imsave("plt1.png", np.moveaxis(image.numpy()*255, 0, 2))
+        plt.imsave(path + "image_" + str(i + 1).zfill(3) + ".png", np.moveaxis(image.numpy()*255, 0, 2))
 
 
 def to_submission(path: str):
