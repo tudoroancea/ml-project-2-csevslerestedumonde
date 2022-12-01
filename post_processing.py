@@ -2,10 +2,12 @@ import torch
 from mask_to_submission import masks_to_submission
 from torchvision.utils import save_image
 import matplotlib.pyplot as plt
-# torchvision.utils.save_image(gt_image, "2.png")
+import numpy as np
+import os
+from PIL import Image
 
 
-def proba_to_zeros_ones(proba: torch.Tensor, threshold=0.5) -> torch.Tensor:
+def proba_to_zeros_ones(proba: torch.Tensor, threshold=0.1) -> torch.Tensor:
     """Converts a probability tensor to a binary tensor.
     Args:
         proba (torch.Tensor): A tensor of probabilities.
@@ -13,7 +15,9 @@ def proba_to_zeros_ones(proba: torch.Tensor, threshold=0.5) -> torch.Tensor:
     Returns:
         torch.Tensor: A binary tensor.
     """
-    return (proba > threshold).long()
+    print(proba.max())
+    print(proba.min())
+    return proba > proba.max() - 0.0002
 
 
 def save_images(images: list, path: str):
@@ -22,18 +26,20 @@ def save_images(images: list, path: str):
         images (list): A list of images.
         path (str): A path to save the images to.
     """
+    if not os.path.exists(path):
+        os.makedirs(path)
     for i, image in enumerate(images):
         # plt.imsave("plt1.png", np.moveaxis(image.numpy()*255, 0, 2))
-        plt.imsave(path + "image_" + str(i + 1).zfill(3) + ".png", np.moveaxis(image.numpy()*255, 0, 2))
+        plt.imsave(path + "image_" + str(i + 1).zfill(3) + ".png", torch.squeeze(image*255).numpy(), cmap="gray")
 
 
-def to_submission(path: str):
+def to_submission(path: str, size: int):
     """Converts a folder of images to a submission file.
     Args:
         path (str): A path to the folder of images.
     """
     images = [
-        Image.open(path + "image_" + str(i + 1).zfill(3) + ".png") for i in range(100)
+        path + "image_" + str(i + 1).zfill(3) + ".png" for i in range(size)
     ]
     masks_to_submission("submission.csv", *images)
 
@@ -51,4 +57,4 @@ def post_processing(images: list, threshold=0.5, path: str = "post_processed_ima
         image = proba_to_zeros_ones(image, threshold)
         post_processed_images.append(image)
     save_images(post_processed_images, path)
-    to_submission(path)
+    to_submission(path, 50)

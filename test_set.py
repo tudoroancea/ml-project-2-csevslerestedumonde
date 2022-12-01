@@ -7,8 +7,8 @@ from PIL import Image
 import torchvision
 
 # select the line depending on the platform
-# device = "cpu"
-device = "cuda"
+device = "cpu"
+# device = "cuda"
 
 torch.manual_seed(127)
 read_image = torchvision.transforms.ToTensor()
