@@ -1,5 +1,7 @@
 import torch
 from mask_to_submission import masks_to_submission
+from torchvision.utils import save_image
+# torchvision.utils.save_image(gt_image, "2.png")
 
 
 def proba_to_zeros_ones(proba: torch.Tensor, threshold=0.5) -> torch.Tensor:
@@ -20,7 +22,7 @@ def save_images(images: list, path: str):
         path (str): A path to save the images to.
     """
     for i, image in enumerate(images):
-        image.save(path + "image_" + str(i + 1).zfill(3) + ".png")
+        save_image(image, path + "image_" + str(i + 1).zfill(3) + ".png")
 
 
 def to_submission(path: str):
