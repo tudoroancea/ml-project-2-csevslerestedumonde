@@ -36,7 +36,7 @@ def data_augmentation():
         images = rotate_symmetry(image)
         gts = rotate_symmetry(gt)
         for im in range(len(images)):
-            image_name = "satImage_" + str(im * 100 + i).zfill(4) + ".png"
+            image_name = "satImage_" + str(im * 100 + i).zfill(3) + ".png"
             images[im].save(destination_path + "images/" + image_name)
             gts[im].save(destination_path + "groundtruth/" + image_name)
 
@@ -78,7 +78,7 @@ class RoadsDataset(tdata.Dataset):
         image_to_tensor = torchvision.transforms.ToTensor()
         for i in range(num_images):
             image_path = os.path.join(
-                self.root, "images/satImage_" + str(i + 1).zfill(4) + ".png"
+                self.root, "images/satImage_" + str(i + 1).zfill(3) + ".png"
             )
             img = image_to_tensor(Image.open(image_path)).type(torch.float32).to(device)
             img /= 255.0
@@ -86,7 +86,7 @@ class RoadsDataset(tdata.Dataset):
             self.images.append(img)
 
             gt_image_path = os.path.join(
-                self.root, "groundtruth/satImage_" + str(i + 1).zfill(4) + ".png"
+                self.root, "groundtruth/satImage_" + str(i + 1).zfill(3) + ".png"
             )
             gt_image = image_to_tensor(Image.open(gt_image_path)).to(device)
             gt_image = torch.unsqueeze(gt_image, 0)

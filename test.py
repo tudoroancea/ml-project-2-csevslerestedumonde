@@ -1,6 +1,15 @@
 import torch
 from model import UNet
 from utils import *
+from load_data import RoadsDataset
+
+device = "cuda"
+
+training_data = RoadsDataset(
+    root="data_augmented/training", num_images=800, device=device
+)
+
+loss_fun = torch.nn.BCELoss()
 
 # Classifying ================================================
 unet_model = UNet(3, 2).to(device)

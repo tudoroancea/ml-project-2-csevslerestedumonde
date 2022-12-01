@@ -53,23 +53,23 @@ def train(model: nn.Module, loss_fun, batch_size, lr, epochs):
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
         # compute metrics on the whole dataset
-        model.eval()
-        with torch.no_grad():
-            pred = model(training_data.images)
-            print(
-                "Dice coeff: {}, Jaccard index: {}".format(
-                    dice_coeff(pred, training_data.gt_images_one_hot),
-                    jaccard_index(pred, training_data.gt_images_one_hot),
-                )
-            )
+        # model.eval()
+        # with torch.no_grad():
+        #     pred = model(training_data.images)
+        #     print(
+        #         "Dice coeff: {}, Jaccard index: {}".format(
+        #             dice_coeff(pred, training_data.gt_images_one_hot),
+        #             jaccard_index(pred, training_data.gt_images_one_hot),
+        #         )
+        #     )
 
 
 # Training ================================================
 unet_model = UNet(n_channels=3, n_classes=2).to(device)
 loss_fun = dice_loss
-train(unet_model, loss_fun, batch_size=40, lr=1e-4, epochs=40)
+train(unet_model, loss_fun, batch_size=10, lr=1e-4, epochs=80)
 print("Done training!")
-model_file_name = "unet_model.pth"
+model_file_name = "unet_model2.pth"
 torch.save(unet_model.state_dict(), model_file_name)
 print("Saved PyTorch Model State to " + model_file_name)
 # ==========================================================
