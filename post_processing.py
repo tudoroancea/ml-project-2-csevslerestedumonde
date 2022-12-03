@@ -1,23 +1,20 @@
 import torch
 from mask_to_submission import masks_to_submission
-from torchvision.utils import save_image
 import matplotlib.pyplot as plt
-import numpy as np
 import os
-from PIL import Image
 
 
 def proba_to_zeros_ones(proba: torch.Tensor, threshold=0.1) -> torch.Tensor:
     """Converts a probability tensor to a binary tensor.
     Args:
-        proba (torch.Tensor): A tensor of probabilities.
+        proba (torch.Tensor): A tensor of probabilities, of any shape.
         threshold (float): A threshold to convert probabilities to binary values.
     Returns:
         torch.Tensor: A binary tensor.
     """
     print(proba.max())
     print(proba.min())
-    return proba > proba.max() - 0.0002
+    return proba > proba.max() * 0.5
 
 
 def save_images(images: list, path: str):
@@ -30,7 +27,7 @@ def save_images(images: list, path: str):
         os.makedirs(path)
     for i, image in enumerate(images):
         # plt.imsave("plt1.png", np.moveaxis(image.numpy()*255, 0, 2))
-        plt.imsave(path + "image_" + str(i + 1).zfill(3) + ".png", torch.squeeze(image*255).numpy(), cmap="gray")
+        plt.imsave(path + "image_" + str(i + 1).zfill(3) + ".png", torch.squeeze(image*255).cpu().numpy(), cmap="gray")
 
 
 def to_submission(path: str, size: int):

@@ -14,7 +14,7 @@ read_image = torchvision.transforms.ToTensor()
 
 # Classifying ================================================
 unet_model = UNet(3, 2).to(device)
-unet_model.load_state_dict(torch.load("unet_model2.pth", map_location=torch.device('cpu')))
+unet_model.load_state_dict(torch.load("unet_model_dice.pth", map_location=torch.device(device)))
 unet_model.eval()
 images = []
 for i in range(1, 51):
