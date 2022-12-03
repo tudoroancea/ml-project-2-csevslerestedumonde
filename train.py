@@ -1,3 +1,6 @@
+import argparse
+import os
+from tkinter.tix import Tree
 import torch
 import torch.nn as nn
 import torch.utils.data as tdata
@@ -6,19 +9,17 @@ from load_data import RoadsDataset
 from model import UNet
 from utils import *
 
-loss_name = "iou"
-device = "cuda"
-model_file_name = "unet_model_{}.pth".format(loss_name)
-
 
 def train(
     model: nn.Module,
     loss_fun,
-    batch_size: int,
-    lr: float,
-    epochs: int,
     train_data_: RoadsDataset,
     validation_data_: RoadsDataset,
+    batch_size: int = 20,
+    lr: float = 1e-4,
+    epochs: int = 80,
+    model_file_name: str = "unet_model.pth",
+    device: str = "cuda",
 ):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     train_dataloader = tdata.DataLoader(train_data_, batch_size=batch_size)
@@ -51,47 +52,68 @@ def train(
                 X_batch, Y_batch = X_batch.to(device), Y_batch.to(device)
                 pred = model(X_batch)
                 a += dice_coeff(pred, Y_batch)
-                b += jaccard_index(pred, Y_batch) 
-            
+                b += jaccard_index(pred, Y_batch)
+
             a /= len(eval_dataloader)
             b /= len(eval_dataloader)
-            print("Dice coeff: {}, Jaccard index: {}".format(a,b))
-            
-        torch.save(unet_model.state_dict(), model_file_name)
+            print("Dice coeff: {}, Jaccard index: {}".format(a, b))
+
+        torch.save(model.state_dict(), model_file_name)
         print("Saved PyTorch Model State to " + model_file_name)
 
 
-train_idx, validation_idx = tdata.random_split(
-    range(1,801), [640, 160], generator=torch.Generator().manual_seed(127)
-)
-train_data = RoadsDataset(
-    root="data_augmented/training", image_idx=train_idx, device=device
-)
-validation_data = RoadsDataset(
-    root="data_augmented/training", image_idx=validation_idx, device=device
-)
+def main():
+    # add arg parser for loss function, batch size, learning rate, epochs
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--loss", type=str, default="dice", required=True)
+    parser.add_argument("--batch_size", type=int, default=20)
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--epochs", type=int, default=80)
+    args = parser.parse_args()
+    assert args.loss in [
+        "bce",
+        "dice",
+        "iou",
+    ], "Loss function must be one of bce, dice, iou"
+    device = "cuda"
 
-# Training ================================================
-unet_model = UNet(n_channels=3, n_classes=2).to(device)
-unet_model.load_state_dict(
-    torch.load("unet_model_dice.pth")
-)
-if loss_name == "dice":
-    loss_fun = dice_loss
-elif loss_name == "bce":
-    loss_fun = bce_loss
-elif loss_name == "iou":
-    loss_fun = iou_loss
-else:
-    raise NotImplementedError("Loss function not recognized")
+    train_idx, validation_idx = tdata.random_split(
+        range(1, 801), [640, 160], generator=torch.Generator().manual_seed(127)
+    )
+    train_data = RoadsDataset(
+        root="data_augmented/training", image_idx=train_idx, device=device
+    )
+    validation_data = RoadsDataset(
+        root="data_augmented/training", image_idx=validation_idx, device=device
+    )
+    model_file_name = "unet_model_{}.pth".format(args.loss)
 
-train(
-    model=unet_model,
-    loss_fun=loss_fun,
-    batch_size=20,
-    lr=1e-4,
-    epochs=80,
-    train_data_=train_data,
-    validation_data_=validation_data,
-)
-print("Done training!")
+    # Training ================================================
+    unet_model = UNet(n_channels=3, n_classes=2).to(device)
+    if os.path.exists(model_file_name):
+        unet_model.load_state_dict(torch.load(model_file_name))
+        print("Loaded model from " + model_file_name)
+
+    if args.loss == "dice":
+        loss_fun = dice_loss
+    elif args.loss == "bce":
+        loss_fun = bce_loss
+    elif args.loss == "iou":
+        loss_fun = iou_loss
+    else:
+        raise NotImplementedError("Loss function not recognized")
+
+    train(
+        model=unet_model,
+        loss_fun=loss_fun,
+        train_data_=train_data,
+        validation_data_=validation_data,
+        batch_size=args.batch_size,
+        lr=args.lr,
+        epochs=args.epochs,
+    )
+    print("Done training!")
+
+
+if __name__ == "__main__":
+    main()
