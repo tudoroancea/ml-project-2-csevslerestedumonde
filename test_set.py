@@ -10,7 +10,6 @@ import torchvision
 device = "cpu"
 # device = "cuda"
 
-torch.manual_seed(127)
 read_image = torchvision.transforms.ToTensor()
 
 # Classifying ================================================

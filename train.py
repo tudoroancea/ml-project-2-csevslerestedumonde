@@ -1,43 +1,33 @@
 import torch
 import torch.nn as nn
 import torch.utils.data as tdata
-import matplotlib.pyplot as plt
 
 from load_data import RoadsDataset
 from model import UNet
 from utils import *
 
-
+loss_name = "iou"
 device = "cuda"
-torch.manual_seed(127)
-print(torch.cuda.is_available())
-
-training_data = RoadsDataset(
-    root="data_augmented/training", num_images=800, device=device
-)
-
-# Showing/saving images ===================================
-# index = torch.randint(0, len(training_data), (1,)).item()
-# image = training_data.images[index].to(device="cpu")
-# gt_image = training_data.gt_images[index].to(device="cpu")
-# plt.subplot(121)
-# save_image(image*255, "1.png")
-# plt.imsave("plt1.png", np.moveaxis(image.numpy()*255, 0, 2))
-# plt.subplot(122)
-# plt.imshow(torch.Tensor(np.moveaxis(gt_image.numpy(),0,2)), cmap="gray")
-# torchvision.utils.save_image(gt_image, "2.png")
-# plt.tight_layout()
-# =========================================================
+model_file_name = "unet_model_{}.pth".format(loss_name)
 
 
-def train(model: nn.Module, loss_fun, batch_size, lr, epochs):
+def train(
+    model: nn.Module,
+    loss_fun,
+    batch_size: int,
+    lr: float,
+    epochs: int,
+    train_data_: RoadsDataset,
+    validation_data_: RoadsDataset,
+):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    dataloader = tdata.DataLoader(training_data, batch_size=batch_size, shuffle=True)
-    size = len(dataloader.dataset)
+    train_dataloader = tdata.DataLoader(train_data_, batch_size=batch_size)
+    eval_dataloader = tdata.DataLoader(validation_data_, batch_size=batch_size)
+    size = len(train_dataloader.dataset)
     for epoch in range(epochs):
         print(f"Epoch {epoch+1}\n-------------------------------")
         model.train()
-        for batch_num, (X_batch, Y_batch) in enumerate(dataloader):
+        for batch_num, (X_batch, Y_batch) in enumerate(train_dataloader):
             X_batch, Y_batch = X_batch.to(device), Y_batch.to(device)
             # Compute prediction and loss
             pred = model(X_batch)
@@ -53,23 +43,55 @@ def train(model: nn.Module, loss_fun, batch_size, lr, epochs):
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
         # compute metrics on the whole dataset
-        # model.eval()
-        # with torch.no_grad():
-        #     pred = model(training_data.images)
-        #     print(
-        #         "Dice coeff: {}, Jaccard index: {}".format(
-        #             dice_coeff(pred, training_data.gt_images_one_hot),
-        #             jaccard_index(pred, training_data.gt_images_one_hot),
-        #         )
-        #     )
+        model.eval()
+        with torch.no_grad():
+            a = 0.0
+            b = 0.0
+            for X_batch, Y_batch in eval_dataloader:
+                X_batch, Y_batch = X_batch.to(device), Y_batch.to(device)
+                pred = model(X_batch)
+                a += dice_coeff(pred, Y_batch)
+                b += jaccard_index(pred, Y_batch) 
+            
+            a /= len(eval_dataloader)
+            b /= len(eval_dataloader)
+            print("Dice coeff: {}, Jaccard index: {}".format(a,b))
+            
+        torch.save(unet_model.state_dict(), model_file_name)
+        print("Saved PyTorch Model State to " + model_file_name)
 
+
+train_idx, validation_idx = tdata.random_split(
+    range(1,801), [640, 160], generator=torch.Generator().manual_seed(127)
+)
+train_data = RoadsDataset(
+    root="data_augmented/training", image_idx=train_idx, device=device
+)
+validation_data = RoadsDataset(
+    root="data_augmented/training", image_idx=validation_idx, device=device
+)
 
 # Training ================================================
 unet_model = UNet(n_channels=3, n_classes=2).to(device)
-loss_fun = dice_loss
-train(unet_model, loss_fun, batch_size=10, lr=1e-4, epochs=80)
+unet_model.load_state_dict(
+    torch.load("unet_model_dice.pth")
+)
+if loss_name == "dice":
+    loss_fun = dice_loss
+elif loss_name == "bce":
+    loss_fun = bce_loss
+elif loss_name == "iou":
+    loss_fun = iou_loss
+else:
+    raise NotImplementedError("Loss function not recognized")
+
+train(
+    model=unet_model,
+    loss_fun=loss_fun,
+    batch_size=20,
+    lr=1e-4,
+    epochs=80,
+    train_data_=train_data,
+    validation_data_=validation_data,
+)
 print("Done training!")
-model_file_name = "unet_model2.pth"
-torch.save(unet_model.state_dict(), model_file_name)
-print("Saved PyTorch Model State to " + model_file_name)
-# ==========================================================

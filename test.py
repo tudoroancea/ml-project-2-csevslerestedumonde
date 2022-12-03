@@ -2,11 +2,13 @@ import torch
 from model import UNet
 from utils import *
 from load_data import RoadsDataset
+from matplotlib import pyplot as plt
+import numpy as np
 
 device = "cuda"
 
 training_data = RoadsDataset(
-    root="data_augmented/training", num_images=800, device=device
+    root="data_augmented/training", num_images=10, device=device
 )
 
 loss_fun = torch.nn.BCELoss()
@@ -14,7 +16,7 @@ loss_fun = torch.nn.BCELoss()
 # Classifying ================================================
 unet_model = UNet(3, 2).to(device)
 unet_model.load_state_dict(
-    torch.load("unet_model.pth", map_location=torch.device("cpu"))
+    torch.load("unet_model3.pth", map_location=torch.device("cpu"))
 )
 unet_model.eval()
 index = 2
