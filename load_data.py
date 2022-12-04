@@ -6,6 +6,17 @@ import os
 
 
 class RoadsDataset(tdata.Dataset):
+    """
+    This class is used to load the training dataset and to store 3 type of arrays in
+    memory:
+    - images: the images of the dataset as torch tensors of shape (1, 3, 400, 400) with
+        float values in [0, 1]
+    - gt_images: the ground truth images of the dataset as torch tensors of shape
+        (1, 400, 400) with float values in [0, 1]
+    - gt_images_one_hot: the ground truth images of the dataset as torch tensors of
+        shape (1, 2, 400, 400) with float values in {0, 1}
+    """
+
     root: str
     idx: list
     images: torch.Tensor
@@ -20,7 +31,7 @@ class RoadsDataset(tdata.Dataset):
     ):
         self.root = root
 
-        self.idx = image_idx if image_idx is not None else list(range(1,801))
+        self.idx = image_idx if image_idx is not None else list(range(1, 801))
         self.images = []
         self.gt_images = []
         self.gt_images_one_hot = []
@@ -38,8 +49,9 @@ class RoadsDataset(tdata.Dataset):
                 self.root, "groundtruth/satImage_" + str(i).zfill(3) + ".png"
             )
             gt_image = image_to_tensor(Image.open(gt_image_path)).to(device)
+            gt_image /= 255.0
 
-            gt_image_one_hot = torch.cat((gt_image / 255, 1 - gt_image / 255))
+            gt_image_one_hot = torch.cat((gt_image, 1 - gt_image))
             gt_image_one_hot = torch.unsqueeze(gt_image_one_hot, 0)
             gt_image = torch.unsqueeze(gt_image, 0)
             self.gt_images.append(gt_image)

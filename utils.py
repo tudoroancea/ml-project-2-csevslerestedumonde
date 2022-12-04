@@ -8,15 +8,19 @@ __all__ = [
     "bce_loss",
 ]
 
+# ======================================================================================
+# LOSS FUNCTIONS =======================================================================
+# ======================================================================================
+
 # classification metrics ======================================================
 def dice_coeff(pred: torch.Tensor, target: torch.Tensor, eps=1e-7):
     """
     Computes the Sorensen-Dice coefficient, also known as the F1 score.
     Args:
-        pred: A tensor of shape [N, 2, H, W] where N is the batch size.
+        pred: A tensor of shape [N, 2, H, W] or [N, 1, H, W] where N is the batch size.
             Each value represents the probability that the corresponding pixel is
             a road.
-        target: A tensor of shape [N, 2, H, W] where N is the batch size.
+        target: A tensor of shape [N, 2, H, W] or [N, 1, H, W] where N is the batch size.
             Each value is 1 for pixels that are roads, and 0 for the rest.
         eps: added to the denominator for numerical stability
     Returns:
@@ -103,3 +107,32 @@ def bce_loss(pred: torch.Tensor, target: torch.Tensor, road_weight: float = 0.5)
         road_weight * target[:, 0, :, :] * torch.log(pred[:, 0, :, :])
         + (1 - road_weight) * (1 - target[:, 0, :, :]) * torch.log(1 - pred[:, 0, :, :])
     )
+
+
+# ======================================================================================
+# TENSOR/ARRAY CONVERSIONS =============================================================
+# ======================================================================================
+
+
+def proba_to_mask(proba: torch.Tensor, threshold: float = 0.5):
+    """
+    Converts a probability map to a mask.
+    Args:
+        proba: A tensor of shape [N, 1, H, W] or [N, H, W] where N is the batch size.
+            Each value represents the probability that the corresponding pixel is
+            a road.
+        threshold: The probability threshold for the mask.
+    Returns:
+        A tensor of shape [N, 1, H, W] or [N, H, W] where N is the batch size.
+        Each value is 1 for pixels that are roads, and 0 for the rest.
+    """
+    return (proba > threshold).float()
+
+
+# ======================================================================================
+# MISC =================================================================================
+# ======================================================================================
+
+
+def predict(model, input):
+    pass

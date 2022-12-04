@@ -81,21 +81,14 @@ class UNet(nn.Module):
 
     def forward(self, x):
         x1 = self.inc(x)
-        del x
         x2 = self.down1(x1)
         x3 = self.down2(x2)
         x4 = self.down3(x3)
         x5 = self.down4(x4)
         x = self.up1(x5, x4)
-        del x4
-        del x5
         x = self.up2(x, x3)
-        del x3
         x = self.up3(x, x2)
-        del x2
         x = self.up4(x, x1)
-        del x1
-        logits = self.outc(x)
-        del x
+        probas = self.outc(x)
         torch.cuda.empty_cache()
-        return logits
+        return probas

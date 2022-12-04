@@ -1,5 +1,7 @@
 data
 data_augmented
+output
+submission
 data.zip
 slurm*.out
 venv*

@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 from tkinter.tix import Tree
 import torch
 import torch.nn as nn
@@ -63,13 +64,13 @@ def train(
 
 
 def main():
-    # add arg parser for loss function, batch size, learning rate, epochs
     parser = argparse.ArgumentParser()
     parser.add_argument("--loss", type=str, default="dice", required=True)
     parser.add_argument("--batch_size", type=int, default=20)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--epochs", type=int, default=80)
     args = parser.parse_args()
+    print("Training with args: ", args)
     assert args.loss in [
         "bce",
         "dice",
@@ -80,9 +81,11 @@ def main():
     train_idx, validation_idx = tdata.random_split(
         range(1, 801), [640, 160], generator=torch.Generator().manual_seed(127)
     )
+    sys.stdout.write("Loading training data... ")
     train_data = RoadsDataset(
         root="data_augmented/training", image_idx=train_idx, device=device
     )
+    sys.stdout.write("Loading validation data... ")
     validation_data = RoadsDataset(
         root="data_augmented/training", image_idx=validation_idx, device=device
     )
@@ -111,6 +114,7 @@ def main():
         batch_size=args.batch_size,
         lr=args.lr,
         epochs=args.epochs,
+        model_file_name=model_file_name,
     )
     print("Done training!")
 
