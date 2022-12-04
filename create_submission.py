@@ -9,7 +9,7 @@ from PIL import Image
 from mask_to_submission import masks_to_submission
 from model import UNet
 from utils import *
-from utils import proba_to_mask
+from load_data import rotate_symmetry
 
 
 def main():
@@ -41,20 +41,30 @@ def main():
     masks_file_names = []
     to_tensor = torchvision.transforms.ToTensor()
     for i in range(1, 51):
-        img = (
-            to_tensor(
-                Image.open("data/test_set_images/test_{}/test_{}.png".format(i, i))
-            )
-            .type(torch.float32)
-            .to(device)
-        )
-        img /= 255.0
+        image = Image.open("data/test_set_images/test_{}/test_{}.png".format(i, i))
+        transformed_images = rotate_symmetry(image)
+        probas = []
+        for transformed_image in transformed_images:
+            img = to_tensor(transformed_image).type(torch.float32).to(device)
+            img /= 255.0
+            with torch.no_grad():
+                Y_pred = torch.squeeze(
+                    unet_model(img.unsqueeze(0))
+                )  # shape (2, 608, 608)
+                Y_pred = Y_pred[0, :, :]  # shape (608, 608)
 
-        with torch.no_grad():
-            Y_pred = torch.squeeze(unet_model(img.unsqueeze(0)))  # shape (2, 608, 608)
-            Y_pred = Y_pred[0, :, :]  # shape (608, 608)
+            probas.append(Y_pred)
 
-        mask = proba_to_mask(Y_pred, args.threshold)
+        probas[1] = probas[1].rot90(-1)
+        probas[2] = probas[2].rot90(-2)
+        probas[3] = probas[3].rot90(-3)
+        probas[4] = probas[4].flip(1)
+        probas[5] = probas[5].flip(1).rot90(-1)
+        probas[6] = probas[6].flip(1).rot90(-2)
+        probas[7] = probas[7].flip(1).rot90(-3)
+        probas = torch.mean(torch.stack(probas), dim=0)
+
+        mask = proba_to_mask(probas, args.threshold)
         masks_file_names.append(
             os.path.join(submission_path, "mask_" + str(i).zfill(3) + ".png")
         )

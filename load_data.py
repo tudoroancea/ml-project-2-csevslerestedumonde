@@ -70,17 +70,17 @@ class RoadsDataset(tdata.Dataset):
         return self.images[item, :, :, :], self.gt_images_one_hot[item, :, :, :]
 
 
-def symmetry(images: list) -> list:
-    for i in range(len(images)):
-        images.append(images[i].transpose(0))
-    return images
-
-
 def rotate(image: Image) -> list:
     images = [image]
     images.append(image.rotate(90))
     images.append(image.rotate(180))
     images.append(image.rotate(270))
+    return images
+
+
+def symmetry(images: list) -> list:
+    for i in range(len(images)):
+        images.append(images[i].transpose(0))
     return images
 
 
