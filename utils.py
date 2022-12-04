@@ -6,6 +6,9 @@ __all__ = [
     "dice_loss",
     "iou_loss",
     "bce_loss",
+    "tpr_score",
+    "fpr_score",
+    "proba_to_mask",
 ]
 
 # ======================================================================================
@@ -13,7 +16,7 @@ __all__ = [
 # ======================================================================================
 
 # classification metrics ======================================================
-def dice_coeff(pred: torch.Tensor, target: torch.Tensor, eps=1e-7):
+def dice_coeff(pred: torch.Tensor, target: torch.Tensor, eps=1e0):
     """
     Computes the Sorensen-Dice coefficient, also known as the F1 score.
     Args:
@@ -134,5 +137,35 @@ def proba_to_mask(proba: torch.Tensor, threshold: float = 0.5):
 # ======================================================================================
 
 
-def predict(model, input):
-    pass
+def tpr_score(prediction: torch.Tensor, target: torch.Tensor):
+    """
+    Computes the true positive rate.
+    Args:
+        target: A tensor of shape [N, 2, H, W] or [N, 1, H, W] where N is the batch size.
+            Each value is 1 for pixels that are roads, and 0 for the rest.
+        prediction: A tensor of shape [N, 2, H, W] or [N, 1, H, W] where N is the batch size.
+            Each value represents the probability that the corresponding pixel is
+            a road.
+    Returns:
+        The true positive rate.
+    """
+    target = target[:, 0, :, :]
+    prediction = prediction[:, 0, :, :]
+    return torch.sum(target * prediction) / torch.sum(target)
+
+
+def fpr_score(prediction: torch.Tensor, target: torch.Tensor):
+    """
+    Computes the false positive rate.
+    Args:
+        target: A tensor of shape [N, 2, H, W] or [N, 1, H, W] where N is the batch size.
+            Each value is 1 for pixels that are roads, and 0 for the rest.
+        prediction: A tensor of shape [N, 2, H, W] or [N, 1, H, W] where N is the batch size.
+            Each value represents the probability that the corresponding pixel is
+            a road.
+    Returns:
+        The false positive rate.
+    """
+    target = target[:, 0, :, :]
+    prediction = prediction[:, 0, :, :]
+    return torch.sum((1 - target) * prediction) / torch.sum(1 - target)

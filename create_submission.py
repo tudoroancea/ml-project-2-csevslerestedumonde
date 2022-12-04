@@ -16,6 +16,7 @@ def main():
     # get the model file from the arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=True)
+    parser.add_argument("--threshold", type=float, default=0.001)
     args = parser.parse_args()
     model_filename = args.model
 
@@ -53,7 +54,7 @@ def main():
             Y_pred = torch.squeeze(unet_model(img.unsqueeze(0)))  # shape (2, 608, 608)
             Y_pred = Y_pred[0, :, :]  # shape (608, 608)
 
-        mask = proba_to_mask(Y_pred, 1.0e-3)
+        mask = proba_to_mask(Y_pred, args.threshold)
         masks_file_names.append(
             os.path.join(submission_path, "mask_" + str(i).zfill(3) + ".png")
         )
