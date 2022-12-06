@@ -1,7 +1,19 @@
+# The aim of this script is to define the model used for the segmentation task
+
+# ================================================================================================
+# IMPORTS
+# ================================================================================================
 import torch
 import torch.nn as nn
 
 
+# ================================================================================================
+# MODULES
+# ================================================================================================
+
+# ==========================================
+# DOUBLE CONVOLUTION
+# ==========================================
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
 
@@ -20,6 +32,9 @@ class DoubleConv(nn.Module):
         return self.double_conv(x)
 
 
+# ==========================================
+# GO DOWN IN U-NET BY 1 STAGE
+# ==========================================
 class Down(nn.Module):
     """Downscaling with maxpool then double conv"""
 
@@ -33,6 +48,9 @@ class Down(nn.Module):
         return self.maxpool_conv(x)
 
 
+# ==========================================
+# GO UP IN U-NET BY 1 STAGE
+# ==========================================
 class Up(nn.Module):
     """Upscaling then double conv"""
 
@@ -52,7 +70,12 @@ class Up(nn.Module):
         return self.conv(x)
 
 
+# ==========================================
+# OUTPUT CONVOLUTION
+# ==========================================
 class OutConv(nn.Module):
+    """Output convolution"""
+
     def __init__(self, in_channels, out_channels, sigmoid: bool = True):
         super(OutConv, self).__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
@@ -67,7 +90,16 @@ class OutConv(nn.Module):
         # return self.sigmoid(self.conv(x))
 
 
+# ================================================================================================
+# MODELS
+# ================================================================================================
+
+# ==========================================
+# U-NET MODEL
+# ==========================================
 class UNet(nn.Module):
+    """Create a U-Net model"""
+
     def __init__(self, n_channels: int = 3, n_classes: int = 1, sigmoid: bool = True):
         super().__init__()
         self.n_channels = n_channels
