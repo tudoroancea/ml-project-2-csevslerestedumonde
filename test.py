@@ -7,22 +7,23 @@ import numpy as np
 import torch
 from matplotlib import pyplot as plt
 
-from load_data import RoadsDataset
+from load_data import TrainRoadsDataset
 from model import UNet
 from utils import *
 
 
 def main():
-    device = "cuda"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     # get the model file from the arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=True)
+    parser.add_argument("--threshold", type=float, default=0.5)
     args = parser.parse_args()
     model_filename = args.model
 
     # load (part of) the train set to test the model
-    data = RoadsDataset(
-        root="data_augmented/training", image_idx=list(range(1, 21)), device=device
+    data = TrainRoadsDataset(
+        path="data_augmented/training", image_idx=list(range(1, 21)), device=device
     )
 
     # create folder for output
@@ -34,7 +35,12 @@ def main():
             os.remove(os.path.join(output_path, file))
 
     # load the model
-    unet_model = UNet(3, 2).to(device)
+    unet_model = UNet(
+        n_channels=3,
+        n_classes=1,
+        sigmoid=True,
+    ).to(device)
+
     unet_model.load_state_dict(torch.load(model_filename))
     unet_model.eval()
 
@@ -44,25 +50,26 @@ def main():
     for i, j in enumerate(data.idx):
         X = data.images[i]
         Y = data.gt_images[i]
-        Y_one_hot = data.gt_images_one_hot[i]
+
         with torch.no_grad():
             Y_pred = unet_model(X.unsqueeze(0))
             print("max Y_pred: ", torch.max(Y_pred[0, 0, :, :]).item())
-            Y_pred = proba_to_mask(Y_pred, torch.max(Y_pred[0, 0, :, :]).item() * 0.1)
+            Y_mask = proba_to_mask(Y_pred, args.threshold)
 
-        dice.append(dice_coeff(Y_pred, Y_one_hot.unsqueeze(0)).item())
-        jaccard.append(jaccard_index(Y_pred, Y_one_hot.unsqueeze(0)).item())
+        dice.append(dice_coeff(Y_mask, Y.unsqueeze(0)).item())
+        jaccard.append(jaccard_index(Y_mask, Y.unsqueeze(0)).item())
         print(
             "Image {}: Dice coeff = {}, Jaccard index = {}".format(
                 j, dice[-1], jaccard[-1]
             )
         )
-        Y_pred = 255.0 * Y_pred[0, 0, :, :].cpu().numpy()
-        Y = 255.0 * torch.squeeze(Y).cpu().detach().numpy()
-        X = 255.0 * np.moveaxis(X.cpu().detach().numpy(), 0, -1)
+        # recast the tensors to 0-255 range for saving
+        Y_mask = 255.0 * Y_mask[0, 0, :, :].cpu().numpy()  # shape (400, 400)
+        Y = 255.0 * torch.squeeze(Y).cpu().numpy()  # shape (400, 400)
+        X = 255.0 * np.moveaxis(X.cpu().numpy(), 0, -1)  # shape (400, 400, 3)
 
         plt.imsave(
-            os.path.join(output_path, "{}_pred.png".format(j)), Y_pred, cmap="gray"
+            os.path.join(output_path, "{}_pred.png".format(j)), Y_mask, cmap="gray"
         )
         plt.imsave(os.path.join(output_path, "{}_gt.png".format(j)), Y, cmap="gray")
         plt.imsave(os.path.join(output_path, "{}_img.png".format(j)), X)
@@ -84,7 +91,7 @@ def compute_roc():
     model_filename = args.model
 
     # load the model
-    unet_model = UNet(3, 2).to(device)
+    unet_model = UNet(3, 1).to(device)
     unet_model.load_state_dict(torch.load(model_filename))
     unet_model.eval()
 
@@ -92,7 +99,7 @@ def compute_roc():
     a, _ = torch.utils.data.random_split(
         list(range(1, 801)), [400, 400], generator=torch.Generator().manual_seed(127)
     )
-    data = RoadsDataset(root="data_augmented/training", image_idx=a, device=device)
+    data = TrainRoadsDataset(path="data_augmented/training", image_idx=a, device=device)
     dataloader = torch.utils.data.DataLoader(data, shuffle=False, batch_size=20)
     # compute ROC curve for different thresholds
     thresholds = np.logspace(-4, -2, 20)
@@ -127,5 +134,5 @@ def compute_roc():
 
 
 if __name__ == "__main__":
-    # main()
-    compute_roc()
+    main()
+    # compute_roc()

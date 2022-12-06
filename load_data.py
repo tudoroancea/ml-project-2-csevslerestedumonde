@@ -4,8 +4,17 @@ import torch.utils.data as tdata
 import torchvision
 import os
 
+__all__ = [
+    "TrainRoadsDataset",
+    "TestRoadsDataset",
+    "augment_data",
+    "rotate",
+    "symmetry",
+    "rotate_symmetry",
+]
 
-class RoadsDataset(tdata.Dataset):
+
+class TrainRoadsDataset(tdata.Dataset):
     """
     This class is used to load the training dataset and to store 3 type of arrays in
     memory:
@@ -17,57 +26,85 @@ class RoadsDataset(tdata.Dataset):
         shape (1, 2, 400, 400) with float values in {0, 1}
     """
 
-    root: str
+    path: str
     idx: list
     images: torch.Tensor
     gt_images: torch.Tensor
-    gt_images_one_hot: torch.Tensor
 
     def __init__(
         self,
-        root: str,
-        image_idx: list = None,
+        path: str,
+        image_idx: list = list(range(1, 801)),
         device="cuda",
     ):
-        self.root = root
+        self.path = path
 
-        self.idx = image_idx if image_idx is not None else list(range(1, 801))
+        self.idx = image_idx
         self.images = []
         self.gt_images = []
-        self.gt_images_one_hot = []
         image_to_tensor = torchvision.transforms.ToTensor()
         for i in self.idx:
             image_path = os.path.join(
-                self.root, "images/satImage_" + str(i).zfill(3) + ".png"
+                self.path, "images/satImage_" + str(i).zfill(3) + ".png"
             )
             img = image_to_tensor(Image.open(image_path)).type(torch.float32).to(device)
             img /= 255.0
-            img = torch.unsqueeze(img, 0)
             self.images.append(img)
 
             gt_image_path = os.path.join(
-                self.root, "groundtruth/satImage_" + str(i).zfill(3) + ".png"
+                self.path, "groundtruth/satImage_" + str(i).zfill(3) + ".png"
             )
             gt_image = image_to_tensor(Image.open(gt_image_path)).to(device)
             gt_image /= 255.0
 
-            gt_image_one_hot = torch.cat((gt_image, 1 - gt_image))
-            gt_image_one_hot = torch.unsqueeze(gt_image_one_hot, 0)
-            gt_image = torch.unsqueeze(gt_image, 0)
             self.gt_images.append(gt_image)
-            self.gt_images_one_hot.append(gt_image_one_hot)
 
-        self.images = torch.cat(self.images, 0)
-        self.gt_images = torch.cat(self.gt_images, 0)
-        self.gt_images_one_hot = torch.cat(self.gt_images_one_hot, 0)
+        self.images = torch.stack(self.images)
+        self.gt_images = torch.stack(self.gt_images)
 
-        print("Loaded {} images from {}".format(len(self.idx), root))
+        print("Loaded {} images from {}".format(len(self.idx), path))
 
     def __len__(self):
         return self.images.shape[0]
 
     def __getitem__(self, item: int) -> tuple:
-        return self.images[item, :, :, :], self.gt_images_one_hot[item, :, :, :]
+        return (
+            self.images[item, :, :, :],
+            self.gt_images[item, :, :, :],
+        )  # shape of images: (3, 400, 400) and (1, 400, 400)
+
+
+class TestRoadsDataset(tdata.Dataset):
+    path: str
+    images: torch.Tensor
+    image_idx: list
+
+    def __init__(
+        self,
+        path: str,
+        image_idx: list = list(range(1, 51)),
+        device="cuda",
+    ):
+        self.path = path
+        self.idx = image_idx
+        self.images = []
+        image_to_tensor = torchvision.transforms.ToTensor()
+        for i in self.idx:
+            image_path = os.path.join(
+                self.path, "test_{}/test_{}.png".format(str(i).zfill(3))
+            )
+            img = image_to_tensor(Image.open(image_path)).type(torch.float32).to(device)
+            img /= 255.0
+            self.images.append(img)
+
+        self.images = torch.stack(self.images)
+        print("Loaded {} images from {}".format(len(self.idx), path))
+
+    def __len__(self):
+        return self.images.shape[0]
+
+    def __getitem__(self, item: int) -> torch.Tensor:
+        return self.images[item, :, :, :]
 
 
 def rotate(image: Image) -> list:
