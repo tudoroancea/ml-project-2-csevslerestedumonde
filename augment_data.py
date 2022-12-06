@@ -8,3 +8,6 @@ if __name__ == "__main__":
         os.makedirs("data_augmented/training/images")
         os.makedirs("data_augmented/training/groundtruth")
         augment_data()
+        print("Data has been augmented!")
+    else:
+        print("Data has already been augmented!")
