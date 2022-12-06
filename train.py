@@ -10,6 +10,8 @@ from load_data import TrainRoadsDataset
 from model import UNet
 from utils import *
 
+testTrainParallel = True
+
 
 def train(
     model: nn.Module,
@@ -97,7 +99,16 @@ def main():
     model_file_name = "unet_model_{}.pth".format(args.loss)
 
     # Training ================================================
-    unet_model = UNet(n_channels=3, n_classes=1, sigmoid=args.loss != "bce").to(device)
+
+    ############### ATTEMPT TO PARALLELIZE ####################
+    unet_model = UNet(n_channels=3, n_classes=1, sigmoid=args.loss != "bce")
+    if testTrainParallel:
+        model = nn.DataParallel(unet_model)
+    else:
+        model = unet_model	
+    model.to(device)
+
+
     if os.path.exists(model_file_name):
         unet_model.load_state_dict(torch.load(model_file_name))
         print("Loaded model from " + model_file_name)
