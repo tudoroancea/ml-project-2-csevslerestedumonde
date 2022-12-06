@@ -53,17 +53,22 @@ class Up(nn.Module):
 
 
 class OutConv(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, sigmoid: bool = True):
         super(OutConv, self).__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
-        self.softmax = nn.Softmax(dim=1)
+        # self.softmax = nn.Softmax(dim=1)
+        self.sigmoid = nn.Sigmoid() if sigmoid else None
 
     def forward(self, x):
-        return self.softmax(self.conv(x))
+        if self.sigmoid:
+            return self.sigmoid(self.conv(x))
+        else:
+            return self.conv(x)
+        # return self.sigmoid(self.conv(x))
 
 
 class UNet(nn.Module):
-    def __init__(self, n_channels, n_classes):
+    def __init__(self, n_channels: int = 3, n_classes: int = 1, sigmoid: bool = True):
         super().__init__()
         self.n_channels = n_channels
         self.n_classes = n_classes
@@ -77,7 +82,7 @@ class UNet(nn.Module):
         self.up2 = Up(512, 256)
         self.up3 = Up(256, 128)
         self.up4 = Up(128, 64)
-        self.outc = OutConv(64, n_classes)
+        self.outc = OutConv(64, n_classes, sigmoid=sigmoid)
 
     def forward(self, x):
         x1 = self.inc(x)
