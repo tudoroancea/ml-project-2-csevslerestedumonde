@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --gres=gpu:1
-#SBATCH --time=12:00:00
+#SBATCH --time=6:00:00
 #SBATCH --mem=32G
 
 module purge
