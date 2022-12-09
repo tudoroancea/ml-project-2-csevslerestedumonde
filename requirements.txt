@@ -1,7 +1,0 @@
---pre --extra-index-url https://download.pytorch.org/whl/cu102
-matplotlib==3.5.3
-numpy==1.21.6
-Pillow==9.3.0
-torch==1.12.1+cu102
-torchvision==0.13.1+cu102
-
