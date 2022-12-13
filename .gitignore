@@ -1,8 +1,12 @@
 # data
 data
 data.zip
+submissions
+predictions
+checkpoints
+logs
 
-venv*
+venv
 *.png
 *.pth
 

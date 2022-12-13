@@ -5,13 +5,13 @@ if [ ! -d data ]; then
 fi
 # create validation data
 cd data || exit 1
-unzip -d training training.zip
-unzip -d test_set_images test_set_images.zip
+unzip training.zip
+unzip test_set_images.zip
 mkdir -p validating/images
 mkdir -p validating/groundtruth
 for i in {81..100}
 do
-  mv training/images/satImage_$(printf "%03d" $i).jpg validating/images
+  mv training/images/satImage_$(printf "%03d" $i).png validating/images
   mv training/groundtruth/satImage_$(printf "%03d" $i).png validating/groundtruth
 done
 # create output dirs

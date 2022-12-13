@@ -20,5 +20,5 @@ module load gcc python/3.7.7
 python3 -m venv venv
 source venv/bin/activate
 pip3 install torch torchvision --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu116
-pip3 install -U pip albumentations matplotlib
+pip3 install -U pip albumentations matplotlib ipython jupyter tqdm
 ```
