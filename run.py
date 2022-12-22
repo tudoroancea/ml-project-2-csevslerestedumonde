@@ -5,27 +5,27 @@ import _thread
 import os
 import re
 
-#to plot and save images
+# to plot and save images
 import matplotlib.image as mpimg
 from PIL import Image
 
 import numpy as np
 
-#pytorch
+# pytorch
 import torch
 import torch.utils.data
 
-#library segmentation models for UNet, LinkNet and metrics implementations 
+# library segmentation models for UNet, LinkNet and metrics implementations
 from segmentation_models_pytorch import metrics
 import segmentation_models_pytorch as smp
 
-#progress bar
+# progress bar
 import tqdm
 
 from albumentations.pytorch import ToTensorV2
 import albumentations
 
-#set the seed espacially for albumentations
+# set the seed espacially for albumentations
 import random
 
 # =================================================================================
@@ -34,7 +34,7 @@ import random
 random.seed(127)
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print("DEVICE: ", DEVICE)
-SUBMISSION_THRESHOLD = 0.25 # Given, DO NOT change it
+SUBMISSION_THRESHOLD = 0.25  # Given, DO NOT change it
 random.seed(127)
 
 # =================================================================================
@@ -45,6 +45,7 @@ TRAIN_IMAGE_PATH = "data/training/images"
 TRAIN_MASK_PATH = "data/training/groundtruth"
 VALIDATION_IMAGE_PATH = "data/validating/images"
 VALIDATION_MASK_PATH = "data/validating/groundtruth"
+
 
 class RoadDataset(torch.utils.data.Dataset):
     """
@@ -127,10 +128,10 @@ def get_loader(
     # Use the dataset in the torch dataloader
     return torch.utils.data.DataLoader(
         dataset,
-        batch_size=batch_size, # Specify batch size
-        shuffle=True, # Shuffle the data to avoid learning the order
-        pin_memory=True, # Copy tensors to CUDA pinned memory
-        generator=torch.Generator().manual_seed(127), # Set seed for reproducibility
+        batch_size=batch_size,  # Specify batch size
+        shuffle=True,  # Shuffle the data to avoid learning the order
+        pin_memory=True,  # Copy tensors to CUDA pinned memory
+        generator=torch.Generator().manual_seed(127),  # Set seed for reproducibility
     )
 
 
@@ -169,19 +170,19 @@ def compute_metrics(loader, model, device):
             output = output[:, -1, :, :].unsqueeze(1)
 
             # Apply sigmoid to the output and round it to 0 or 1 to get the prediction for each pixel
-            pred: torch.Tensor = (torch.sigmoid(output) >= 0.5)
+            pred: torch.Tensor = torch.sigmoid(output) >= 0.5
 
             # Compute the number of correct pixels and the total number of pixels
             num_correct += torch.sum(pred == y).item()
             num_pixels += torch.numel(pred)
-            
+
             # True positive and negative, false positive and negative using segmentation models functions
-            tp, fp, fn, tn = metrics.get_stats(pred, y.int(), mode='binary')
+            tp, fp, fn, tn = metrics.get_stats(pred, y.int(), mode="binary")
 
             # Compute F1 score, precision and recall
-            f1_score += metrics.f1_score(tp, fp, fn, tn, reduction='micro')
-            precision += metrics.precision(tp, fp, fn, tn, reduction='micro')
-            recall += metrics.recall(tp, fp, fn, tn, reduction='micro')
+            f1_score += metrics.f1_score(tp, fp, fn, tn, reduction="micro")
+            precision += metrics.precision(tp, fp, fn, tn, reduction="micro")
+            recall += metrics.recall(tp, fp, fn, tn, reduction="micro")
 
     # Add metrics to the dictionnary and multiply by 100 to get a percentage
     logs["acc"] = num_correct / num_pixels * 100
@@ -240,9 +241,9 @@ def train(
     model_name,
     train_loader,
     validation_loader,
-    lr_max: float = 1.0e-3, # Learning rate minimal
-    lr_min: float = 1.0e-5, # Learning rate minimal
-    epochs: int = 10, # Number of epochs
+    lr_max: float = 1.0e-3,  # Learning rate minimal
+    lr_min: float = 1.0e-5,  # Learning rate minimal
+    epochs: int = 10,  # Number of epochs
 ):
     """Train the model"""
     # Create the log file
@@ -261,7 +262,9 @@ def train(
     # optimizer = torch.optim.SGD(model.parameters(), lr=1, momentum=0.9)
 
     # Define the scheduler and scaler
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=2, eta_min=lr_min)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+        optimizer, T_0=10, T_mult=2, eta_min=lr_min
+    )
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
     scaler = torch.cuda.amp.GradScaler()
 
@@ -270,7 +273,7 @@ def train(
     min_loss = 0.5
 
     # Train the model, then save the training logs and the best model
-    loop = tqdm.tqdm(range(epochs)) 
+    loop = tqdm.tqdm(range(epochs))
     for e in loop:
         # Train the model for one epoch and get the loss
         loss = epoch(model, train_loader, optimizer, criterion, scaler)
@@ -306,12 +309,14 @@ def train(
                     metrics["acc"],
                     metrics["precision"],
                     metrics["recall"],
-                    min_loss
+                    min_loss,
                 )
             )
 
         # Update the progress bar
-        loop.set_postfix(loss=loss, f1_score=metrics["f1 score"], max_f1=max_f1, min_loss=min_loss)
+        loop.set_postfix(
+            loss=loss, f1_score=metrics["f1 score"], max_f1=max_f1, min_loss=min_loss
+        )
 
     # Save the logs into a file
     torch.save(model, model_file_name)
@@ -324,12 +329,15 @@ train_transform = albumentations.Compose(
         albumentations.Transpose(p=0.5),
         albumentations.Rotate(p=0.5),
         albumentations.ShiftScaleRotate(p=0.5),
-        albumentations.RandomBrightnessContrast(p=0.5),
-        albumentations.CoarseDropout(min_holes= 5, max_holes=20, min_height=5, max_height=20, min_width=5, max_width=20, p=0.5),
-        albumentations.OpticalDistortion(p=0.5),
-        albumentations.GridDistortion(p=0.5),
-        albumentations.ElasticTransform(p=0.5),
-        albumentations.PiecewiseAffine(p=0.5),
+        albumentations.CoarseDropout(
+            min_holes=5,
+            max_holes=20,
+            min_height=5,
+            max_height=20,
+            min_width=5,
+            max_width=20,
+            p=0.5,
+        ),
         ToTensorV2(),
     ]
 )
@@ -354,11 +362,11 @@ val_loader = get_loader(
 # our best model
 batch_size = 16
 train_loader = get_loader(
-        data_path=TRAIN_IMAGE_PATH,
-        mask_path=TRAIN_MASK_PATH,
-        transform=train_transform,
-        batch_size=batch_size, # Choose the batch size
-    )
+    data_path=TRAIN_IMAGE_PATH,
+    mask_path=TRAIN_MASK_PATH,
+    transform=train_transform,
+    batch_size=batch_size,  # Choose the batch size
+)
 
 train(
     model=smp.Linknet(
@@ -368,12 +376,13 @@ train(
         in_channels=3,
     ).to(DEVICE),
     model_name="BESTMODEL",
-    epochs=150, #increase
+    epochs=150,  # increase
     train_loader=train_loader,
     validation_loader=val_loader,
     lr_min=1e-05,
     lr_max=1e-05,
 )
+
 
 def patch_to_label(patch):
     df = np.mean(patch)
@@ -483,7 +492,7 @@ def create_submission(model_name: str):
     masks_to_submission(submission_filename, *image_filenames)
 
 
-#finally create the submissions
+# finally create the submissions
 create_submission("unet_smp")
 create_submission("unet_no_preprocessing")
 create_submission("linknet18_smp")
