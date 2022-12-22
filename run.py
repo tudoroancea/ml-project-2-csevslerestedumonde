@@ -2,13 +2,11 @@
 # IMPORTS
 # =================================================================================
 import _thread
-from cProfile import run
 import os
 import re
 
 #to plot and save images
 import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
 from PIL import Image
 
 import numpy as np
@@ -16,8 +14,6 @@ import numpy as np
 #pytorch
 import torch
 import torch.utils.data
-import torchvision
-from torchvision.transforms.functional import resize
 
 #library segmentation models for UNet, LinkNet and metrics implementations 
 from segmentation_models_pytorch import metrics

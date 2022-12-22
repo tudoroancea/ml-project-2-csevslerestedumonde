@@ -16,14 +16,12 @@ data into training and validation sets.
 
 Also make sure to have the following dependencies installed:
 - Python >= 3.7
-- torch
-- torchvision
-- albumentations
+- torch  (ML framework use for training the models)
+- albumentations (data augmentation library)
+- segmentation_models_python  (collection of pre-trained segmentation models)
 - Pillow
 - tqdm
-- segmentation_models_python
 
 Then you can either run [`road_segmentation.ipynb`](road_segmentation.ipynb) to 
 have all the models and cross-validation or only [`run.py`](run.py) to only train 
 the best model.
-
