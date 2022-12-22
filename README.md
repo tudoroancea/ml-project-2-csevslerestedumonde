@@ -3,6 +3,8 @@
 This repo contains the code of the group CSEVsLeResteDuMonde (Tudor Oancea, 
 Philippe Servant and Pierre Ancey) for the AIcrowd Road Segmentation challenge.
 
+You can find our entire approach in the Jupyter notebook [`road_segmentation.ipynb`](road_segmentation.ipynb). Please refer to our report for all the details. 
+
 ## Setup
 Once you have unzipped `submission.zip` in a folder `submission`, you should 
 download a fresh copy of the data from AIcrowd and place it inside 
