@@ -1,24 +1,21 @@
 # Project Road Segmentation
 
-## Models
-
-
-## Setup instructions
-On local computer
+## Setup
+Once you have unzipped `submission.zip` in a folder `submission`, you should 
+download a fresh copy of the data from AIcrowd and place it inside 
+`submission/data` in such a way that the following files are present:
 ```bash
-export IZAR_USERNAME="oancea"
-scp -r data $IZAR_USERNAME@izar.epfl.ch:/home/$IZAR_USERNAME/road_segmentation/data
-scp setup.sh $IZAR_USERNAME@izar.epfl.ch:/home/$IZAR_USERNAME/road_segmentation/
-scp launch_jupyter.sh $IZAR_USERNAME@izar.epfl.ch:/home/$IZAR_USERNAME/road_segmentation/
+submission/data/test_set_images.zip
+submission/data/training.zip
 ```
+Now you can just run `setup.sh` to unzip the data files, partition the training 
+data into training and validation sets.
 
-On Izar
-```bash
-cd road_segmentation
-./setup.sh
-module load gcc python/3.7.7
-python3 -m venv venv
-source venv/bin/activate
-pip3 install torch torchvision --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu116
-pip3 install -U pip albumentations matplotlib ipython jupyter tqdm
-```
+Also make sure to have the following dependencies installed:
+- Python >= 3.7
+- torch
+- torchvision
+- albumentations
+- Pillow
+- tqdm
+- segmentation_models_python

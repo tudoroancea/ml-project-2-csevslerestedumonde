@@ -5,6 +5,9 @@ submissions
 predictions
 checkpoints
 logs
+submission
+*.pdf
+submission.zip
 
 venv
 *.png
